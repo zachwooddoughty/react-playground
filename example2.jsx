@@ -9,10 +9,10 @@ var TableBody = React.createClass({
     },
 
     componentWillReceiveProps: function(nextProps) {
-        var shouldUpdate = !(
-            nextProps.visibleStart >= this.state.displayStart &&
-            nextProps.visibleEnd <= this.state.displayEnd
-        ) || (nextProps.totalLength !== this.state.totalLength);
+        var shouldUpdate =
+            nextProps.visibleStart < this.state.displayStart
+            || nextProps.visibleEnd > this.state.displayEnd
+            || nextProps.totalLength !== this.state.totalLength;
 
         if (shouldUpdate) {
             this.setState({
@@ -35,7 +35,9 @@ var TableBody = React.createClass({
         var tdStyle = {border: '1px solid white', width: '50%', background: '#CCCCCC'};
         var trStyle = {height: '50px'};
 
-        for (i = 0; i < this.props.totalLength; ++i) {
+        console.log("Displaying " + (this.props.displayEnd - this.props.displayStart) + " rows in our table");
+
+        for (var i = this.props.displayStart; i < this.props.displayEnd; ++i) {
             var itemList = this.props.items[i];
             var row;
             if (itemList.length == 0){
@@ -48,15 +50,13 @@ var TableBody = React.createClass({
                 item2 = itemList[1];
                 row = (<div><td style={tdStyle} rowSpan={item1}>{item1}</td><td style={tdStyle} rowSpan={item2}>{item2}</td></div>);
             }
-            console.log("Row is: " + row);
             rows.push(
                 (<tr style={trStyle} key={i}>{row}</tr>)
             );
         }
-        console.log("Rows are: " + rows);
         return(
             <table style={{width: '100%'}}>
-                {rows}
+                <tbody>{rows}</tbody>
             </table>
         );
         
@@ -65,23 +65,30 @@ var TableBody = React.createClass({
 
 var InfiniteTable = React.createClass({
     getInitialState: function(){
+        var itemsPerPage = 20;  // Math.floor(this.props.height / chunkHeight);
         return {
             items: this.props.items,
             totalLength: this.props.items.length,
             height: this.props.height,
+            itemsPerPage: itemsPerPage,
             visibleStart: 0,
-            visibleEnd: 10,
+            visibleEnd: itemsPerPage,
             displayStart: 0,
-            displayEnd: 20
+            displayEnd: 3 * itemsPerPage
         };
     },
 
     scrollState: function(scroll) {
-        var visibleStart =  0; // Math.floor(scroll / this.state.recordHeight);
-        var visibleEnd = this.state.totalLength; // Math.min(visibleStart + this.state.recordsPerBody, this.state.total - 1);
+        console.log("We've scrolled to " + scroll);
+        var itemsPerChunk = this.state.itemsPerChunk;
 
-        var displayStart = 0; // Math.max(0, Math.floor(scroll / this.state.recordHeight) - this.state.recordsPerBody * 1.5);
-        var displayEnd = this.state.totalLength; // Math.min(displayStart + 4 * this.state.recordsPerBody, this.state.total - 1);
+        // ZACHTODO: This needs to exactly represent where in the scrolling-world this should be.
+
+        var visibleStart = itemsPerChunk * Math.floor(scroll / this.state.chunksPerPage);
+        var visibleEnd = Math.min(itemsPerChunk * (visibleStart + 2), this.state.totalLength - 1);
+
+        var displayStart = Math.max(0, itemsPerChunk * (Math.floor(scroll / this.state.chunksPerPage) - 1));
+        var displayEnd = Math.min(displayStart + 3 * itemsPerChunk * this.state.chunksPerPage, this.state.totalLength - 1);
 
         this.setState({
             visibleStart: visibleStart,
@@ -93,12 +100,20 @@ var InfiniteTable = React.createClass({
     },
 
     onScroll: function(event) {
-        this.scrollState(this.refs.scrollable.getDOMNode().scrollTop);
+        this.scrollState(event.srcElement.body.scrollTop);
+    },
+
+    componentDidMount: function(){
+        window.addEventListener('scroll', this.onScroll);
+    },
+
+    componentWillUnmount: function(){
+        window.removeEventListener('scroll', this.onScroll);
     },
 
     render: function() {
         return (
-            <div style={{'overflowX': 'hidden', 'overflowY': 'auto'}} ref="scrollable" onScroll={this.onScroll}>
+            <div style={{'overflowX': 'hidden', 'overflowY': 'auto', top: 26}} ref="scrollable">
                 <TableBody
                     items={this.state.items}
                     totalLength={this.state.totalLength}
@@ -112,47 +127,15 @@ var InfiniteTable = React.createClass({
     }
 });
 
-var items = [
-    [4, 5],
-    [],
-    [],
-    [],
-    [5], 
-    [2],
-    [],
-    [6],
-    [],
-    [3],
-    [],
-    [],
-    [1]
-];
-// var items = [
-//   (<tr><td rowspan={4}>4</td><td rowspan={5}>5</td></tr>),
-//   (<tr></tr>),
-//   (<tr></tr>),
-//   (<tr></tr>),
-//   (<tr><td rowspan={5}>5</td></tr>),
-//   (<tr><td rowspan={2}>2</td></tr>),
-//   (<tr></tr>),
-//   (<tr><td rowspan={6}>6</td></tr>),
-//   (<tr></tr>),
-//   (<tr><td rowspan={3}>3</td></tr>),
-//   (<tr></tr>),
-//   (<tr></tr>),
-//   (<tr><td rowspan={1}>1</td></tr>),
-//   (<tr><td rowspan={6} colspan={2}>12</td></tr>),
-//   (<tr></tr>),
-//   (<tr></tr>),
-//   (<tr></tr>),
-//   (<tr></tr>),
-//   (<tr></tr>),
-// ];
+var items = [];
+for (i = 0; i < 1000; i++){
+    items.push([4, 5], [], [], [], [5], [2], [], [6], [], [3], [], [], [1]);
+}
 
 React.render(
     <InfiniteTable
         items={items}
-        height={window.height}
+        height={600}
     />,
     document.getElementById('infinite-table')
 );
