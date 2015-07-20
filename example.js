@@ -1,8 +1,8 @@
 var ListItem = React.createClass({displayName: "ListItem",
     getDefaultProps: function() {
         return {
-            height: 50,
-            lineHeight: "50px"
+            height: 400,
+            lineHeight: "400px"
         }
     },
     render: function() {
@@ -10,13 +10,21 @@ var ListItem = React.createClass({displayName: "ListItem",
             {
                 height: this.props.height,
                 lineHeight: this.props.lineHeight,
-                overflow: 'scroll'
+                overflow: 'hidden'
             }
         }, 
-            React.createElement("div", {style: {height: 400}}, 
-            "List Item ", this.props.index
-            )
+            React.createElement("div", null, "List Item ", this.props.index)
         );
+    }
+});
+
+var DoubleInfinite = React.createClass({displayName: "DoubleInfinite",
+    render: function() {
+        var tdStyle = {maxWidth: '50%'};
+        return React.createElement("table", null, React.createElement("tr", null, 
+                 React.createElement("td", {style: tdStyle}, React.createElement(InfiniteList, null)), 
+                 React.createElement("td", {style: tdStyle}, React.createElement(InfiniteList, null))
+               ))
     }
 });
 
@@ -58,17 +66,19 @@ var InfiniteList = React.createClass({displayName: "InfiniteList",
     },
 
     render: function() {
-        return React.createElement(Infinite, {elementHeight: 50, 
-                         containerHeight: window.innerHeight, 
-                         infiniteLoadBeginBottomOffset: 200, 
-                         onInfiniteLoad: this.handleInfiniteLoad, 
-                         loadingSpinnerDelegate: this.elementInfiniteLoad(), 
-                         isInfiniteLoading: this.state.isInfiniteLoading, 
-                         timeScrollStateLastsForAfterUserScrolls: 1000
-                         }, 
-                    this.state.elements
-                );
+        return React.createElement(Infinite, {
+                          elementHeight: 400, 
+                          containerHeight: window.innerHeight, 
+                          infiniteLoadBeginBottomOffset: 200, 
+                          onInfiniteLoad: this.handleInfiniteLoad, 
+                          loadingSpinnerDelegate: this.elementInfiniteLoad(), 
+                          isInfiniteLoading: this.state.isInfiniteLoading, 
+                          timeScrollStateLastsForAfterUserScrolls: 1000
+                          }, 
+                     this.state.elements
+                 )
+               ;
     }
 });
 
-React.render(React.createElement(InfiniteList, null), document.getElementById('infinite-window-example'));
+React.render(React.createElement(DoubleInfinite, null), document.getElementById('double-infinite'));

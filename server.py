@@ -8,7 +8,7 @@ if not os.environ.get("dbo-userid"):
 
 app = Flask(__name__, static_url_path='', static_folder='')
 app.debug = True
-app.add_url_rule('/', 'root', lambda: app.send_static_file('example.html'))
+app.add_url_rule('/', 'root', lambda: app.send_static_file('example2.html'))
 
 
 class SessionAuth(requests.auth.AuthBase):

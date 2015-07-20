@@ -10,13 +10,21 @@ var ListItem = React.createClass({
             {
                 height: this.props.height,
                 lineHeight: this.props.lineHeight,
-                overflow: 'scroll'
+                overflow: 'hidden'
             }
         }>
-            <div style={{height: 400}}>
-            List Item {this.props.index}
-            </div>
+            <div>List Item {this.props.index}</div>
         </div>;
+    }
+});
+
+var DoubleInfinite = React.createClass({
+    render: function() {
+        var tdStyle = {maxWidth: '50%'};
+        return <table><tr>
+                 <td style={tdStyle}><InfiniteList /></td>
+                 <td style={tdStyle}><InfiniteList /></td>
+               </tr></table>
     }
 });
 
@@ -58,17 +66,19 @@ var InfiniteList = React.createClass({
     },
 
     render: function() {
-        return <Infinite elementHeight={400}
-                         containerHeight={window.innerHeight}
-                         infiniteLoadBeginBottomOffset={200}
-                         onInfiniteLoad={this.handleInfiniteLoad}
-                         loadingSpinnerDelegate={this.elementInfiniteLoad()}
-                         isInfiniteLoading={this.state.isInfiniteLoading}
-                         timeScrollStateLastsForAfterUserScrolls={1000}
-                         >
-                    {this.state.elements}
-                </Infinite>;
+        return <Infinite  
+                          elementHeight={400}
+                          containerHeight={window.innerHeight}
+                          infiniteLoadBeginBottomOffset={200}
+                          onInfiniteLoad={this.handleInfiniteLoad}
+                          loadingSpinnerDelegate={this.elementInfiniteLoad()}
+                          isInfiniteLoading={this.state.isInfiniteLoading}
+                          timeScrollStateLastsForAfterUserScrolls={1000}
+                          >
+                     {this.state.elements}
+                 </Infinite>
+               ;
     }
 });
 
-React.render(<InfiniteList/>, document.getElementById('infinite-window-example'));
+React.render(<DoubleInfinite />, document.getElementById('double-infinite'));

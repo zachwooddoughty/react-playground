@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "React bs",
   "scripts": {
-    "build": "gulp build && gulp build -E"
+    "gulp": "gulp build && gulp build -E"
   },
   "engines": {
     "node": "0.10",
