@@ -9,21 +9,40 @@ var TableBody = React.createClass({displayName: "TableBody",
     },
 
     componentWillReceiveProps: function(nextProps) {
-        var scrollTop = nextProps.scrollPosition;
-        var scrollBottom = this.state.firstRenderedPixel + this.props.height + nextProps.scrollPosition;
-        var shouldUpdate = 
-            scrollTop < this.state.firstRenderedPixel + this.state.scrollBuffer
-            || scrollBottom > this.state.lastRenderedPixel - this.state.scrollBuffer;
+        var realPosition = nextProps.realPosition;
+        var newFirstRenderedPixel = this.state.firstRenderedPixel;
+        var newLastRenderedPixel = this.state.lastRenderedPixel;
 
-        console.log("Is " + scrollTop + "<" + this.state.firstRenderedPixel + "+500? "
-        + "Is " + scrollBottom + ">" + this.state.lastRenderedPixel + "-500? "
-        + "Should we update? " + (shouldUpdate ? "yup!" : "nope.")
+        console.log("Is " + realPosition + "<" + this.state.firstRenderedPixel + "+500? "
+        + "Is " + realPosition + ">" + this.state.lastRenderedPixel + "-500? "
         );
+
+        var shouldUpdate = false;
+        if (realPosition < this.state.firstRenderedPixel + 500){
+            shouldUpdate = true;
+            newFirstRenderedPixel = Math.max(0, this.state.firstRenderedPixel - 2000);
+            newLastRenderedPixel = this.state.firstRenderedPixel + 3000;
+        }
+        if (realPosition > this.state.lastRenderedPixel - 500){
+            shouldUpdate = true;
+            newFirstRenderedPixel = Math.max(0, this.state.lastRenderedPixel - 1000);
+            newLastRenderedPixel = this.state.lastRenderedPixel + 3000;
+        }
+        // var shouldUpdate = 
+        //     (this.state.firstRenderedPixel > 0 && realPosition < this.state.firstRenderedPixel + this.state.scrollBuffer)
+        //     || realPosition > this.state.lastRenderedPixel - this.state.scrollBuffer;
+
+        // console.log("Is " + realPosition + "<" + this.state.firstRenderedPixel + "+500? "
+        // + "Is " + realPosition + ">" + this.state.lastRenderedPixel + "-500? "
+        // + "Should we update? " + (shouldUpdate ?
+        //     "yup! We're going to " + nextProps.firstRenderedPixel + ", " + nextProps.lastRenderedPixel
+        //     : "nope.")
+        // );
         if (shouldUpdate) {
             this.setState({
                 shouldUpdate: shouldUpdate,
-                firstRenderedPixel: nextProps.firstRenderedPixel,
-                lastRenderedPixel: nextProps.lastRenderedPixel
+                firstRenderedPixel: newFirstRenderedPixel,
+                lastRenderedPixel: newLastRenderedPixel
             });
         } else {
             this.setState({shouldUpdate: false});
@@ -106,19 +125,29 @@ var InfiniteTable = React.createClass({displayName: "InfiniteTable",
             firstRenderedPixel: 0,
             lastRenderedPixel: 3000,
             scrollPosition: 0,
+            realPosition: 0,
         };
     },
 
     scrollState: function(scrollPosition) {
-        // ZACHTODO: This needs to exactly represent where in the scrolling-world this should be.
+        var realPosition = this.state.firstRenderedPixel + scrollPosition;
+        var newFirstRenderedPixel = this.state.firstRenderedPixel;
+        var newLastRenderedPixel = this.state.lastRenderedPixel;
 
-        var firstRenderedPixel = Math.max(0, scrollPosition - 3000);
-        var lastRenderedPixel = Math.min(scrollPosition + 3000, 8000);
+        if (realPosition < this.state.firstRenderedPixel + 500){
+            newFirstRenderedPixel = Math.max(0, this.state.firstRenderedPixel - 2000);
+            newLastRenderedPixel = this.state.firstRenderedPixel + 3000;
+        }
+        if (realPosition > this.state.lastRenderedPixel - 500){
+            newFirstRenderedPixel = Math.max(0, this.state.lastRenderedPixel - 1000);
+            newLastRenderedPixel = this.state.lastRenderedPixel + 3000;
+        }
 
         this.setState({
-            firstRenderedPixel: firstRenderedPixel,
-            lastRenderedPixel: lastRenderedPixel,
             scrollPosition: scrollPosition,
+            realPosition: realPosition,
+            firstRenderedPixel: newFirstRenderedPixel,
+            lastRenderedPixel: newLastRenderedPixel
         });
     },
 
@@ -144,6 +173,7 @@ var InfiniteTable = React.createClass({displayName: "InfiniteTable",
                     firstRenderedPixel: this.state.firstRenderedPixel, 
                     lastRenderedPixel: this.state.lastRenderedPixel, 
                     scrollPosition: this.state.scrollPosition, 
+                    realPosition: this.state.realPosition, 
                     height: this.state.height}
                 )
             )
@@ -152,7 +182,7 @@ var InfiniteTable = React.createClass({displayName: "InfiniteTable",
 });
 
 var items = [];
-for (i = 0; i < 1000; i++){
+for (i = 0; i < 100000; i++){
     items.push([4, 5], [], [], [], [5], [2], [], [6], [], [3], [], [], [1]);
 }
 
