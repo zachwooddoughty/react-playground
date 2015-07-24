@@ -1,48 +1,33 @@
+var colorHash = function(x){
+    var chaos = (x % 1000) / 1000;
+    for (i = 1; i < 5; ++i){
+        chaos = 3.9 * chaos * (1 - chaos)
+    }
+    hash = chaos.toString().split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);              
+    var r = (hash & 0xFF0000) >> 16;
+    var g = (hash & 0x00FF00) >> 8;
+    var b = hash & 0x0000FF;
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
 var TableBody = React.createClass({
     getInitialState: function() {
         return {
             shouldUpdate: true,
             firstRenderedPixel: 0,
             lastRenderedPixel: 0,
-            scrollBuffer: 500
         };
     },
 
     componentWillReceiveProps: function(nextProps) {
-        var realPosition = nextProps.realPosition;
-        var newFirstRenderedPixel = this.state.firstRenderedPixel;
-        var newLastRenderedPixel = this.state.lastRenderedPixel;
+        var shouldUpdate = nextProps.firstRenderedPixel != this.state.firstRenderedPixel
+                        || nextProps.lastRenderedPixel != this.state.lastRenderedPixel;
 
-        console.log("Is " + realPosition + "<" + this.state.firstRenderedPixel + "+500? "
-        + "Is " + realPosition + ">" + this.state.lastRenderedPixel + "-500? "
-        );
-
-        var shouldUpdate = false;
-        if (realPosition < this.state.firstRenderedPixel + 500){
-            shouldUpdate = true;
-            newFirstRenderedPixel = Math.max(0, this.state.firstRenderedPixel - 2000);
-            newLastRenderedPixel = this.state.firstRenderedPixel + 3000;
-        }
-        if (realPosition > this.state.lastRenderedPixel - 500){
-            shouldUpdate = true;
-            newFirstRenderedPixel = Math.max(0, this.state.lastRenderedPixel - 1000);
-            newLastRenderedPixel = this.state.lastRenderedPixel + 3000;
-        }
-        // var shouldUpdate = 
-        //     (this.state.firstRenderedPixel > 0 && realPosition < this.state.firstRenderedPixel + this.state.scrollBuffer)
-        //     || realPosition > this.state.lastRenderedPixel - this.state.scrollBuffer;
-
-        // console.log("Is " + realPosition + "<" + this.state.firstRenderedPixel + "+500? "
-        // + "Is " + realPosition + ">" + this.state.lastRenderedPixel + "-500? "
-        // + "Should we update? " + (shouldUpdate ?
-        //     "yup! We're going to " + nextProps.firstRenderedPixel + ", " + nextProps.lastRenderedPixel
-        //     : "nope.")
-        // );
         if (shouldUpdate) {
             this.setState({
                 shouldUpdate: shouldUpdate,
-                firstRenderedPixel: newFirstRenderedPixel,
-                lastRenderedPixel: newLastRenderedPixel
+                firstRenderedPixel: nextProps.firstRenderedPixel,
+                lastRenderedPixel: nextProps.lastRenderedPixel,
             });
         } else {
             this.setState({shouldUpdate: false});
@@ -55,10 +40,10 @@ var TableBody = React.createClass({
 
     render: function(){
         var rowHeight = 50;
-        var tdStyle = {border: '1px solid white', width: '50%', background: '#CCCCCC'};
+        var borderPx = 1;
+        var tdStyle = {border: borderPx + 'px solid white', width: '50%', background: '#CCCCCC'};
         var trStyle = {height: rowHeight + 'px'};
 
-        console.log("Displaying from " + this.props.firstRenderedPixel + " to " + this.props.lastRenderedPixel);
         var rows = []
 
         var leftDepth = 0,
@@ -75,23 +60,29 @@ var TableBody = React.createClass({
                 if (rightOverhang > 0) { rightOverhang -= 1;}
                 row = "";
             } else if (itemList.length == 1){
-                item = itemList[0];
+                var item = itemList[0];
+                var body;
                 if (leftDepth <= rightDepth){
-                    leftDepth += item * rowHeight;
+                    leftDepth += item * (borderPx + rowHeight + 1) - 2;
                     leftOverhang = item - 1;
+                    body = leftDepth;
                 } else {
-                    rightDepth += item * rowHeight;
+                    rightDepth += item * (borderPx + rowHeight + 1) - 2;
                     rightOverhang = item - 1;
+                    body = rightDepth;
                 }
-                row = (<td style={tdStyle} rowSpan={item}>{item}</td>);
+                var myStyle = {border: borderPx + 'px solid white', width: '50%', background: colorHash(body)};
+                row = (<td style={myStyle} rowSpan={item}>{body}</td>);
             } else {
                 item1 = itemList[0];
-                leftDepth += item1 * rowHeight;
+                leftDepth += item1 * (borderPx + rowHeight + 1) - 2;
                 leftOverhang = item1 - 1;
                 item2 = itemList[1];
-                rightDepth += item2 * rowHeight;
+                rightDepth += item2 * (borderPx + rowHeight + 1) - 2;
                 rightOverhang = item2 - 1;
-                row = (<div><td style={tdStyle} rowSpan={item1}>{item1}</td><td style={tdStyle} rowSpan={item2}>{item2}</td></div>);
+                var leftStyle = {border: borderPx + 'px solid white', width: '50%', background: colorHash(leftDepth)};
+                var rightStyle = {border: borderPx + 'px solid white', width: '50%', background: colorHash(rightDepth)};
+                row = (<div><td style={leftStyle} rowSpan={item1}>{leftDepth}</td><td style={rightStyle} rowSpan={item2}>{rightDepth}</td></div>);
             }
             if (Math.max(leftDepth, rightDepth) > this.props.firstRenderedPixel){
                 rows.push(
@@ -103,6 +94,7 @@ var TableBody = React.createClass({
                 console.log("Oh no! We've run out of items!");
             }
         }
+        // console.log("With a LRP of %d, we rendered up to pixels (%d, %d)", this.props.lastRenderedPixel, leftDepth, rightDepth);
         return(
             <table style={{width: '100%'}}>
                 <tbody>{rows}</tbody>
@@ -114,67 +106,52 @@ var TableBody = React.createClass({
 
 var InfiniteTable = React.createClass({
     getInitialState: function(){
-        var itemsPerPage = 20;  // Math.floor(this.props.height / chunkHeight);
         return {
-            items: this.props.items,
-            totalLength: this.props.items.length,
-            height: this.props.height,
-            itemsPerPage: itemsPerPage,
-            // firstLoadedPixel: 0,
-            // lastLoadedPixel: 5000,
             firstRenderedPixel: 0,
-            lastRenderedPixel: 3000,
-            scrollPosition: 0,
-            realPosition: 0,
+            lastRenderedPixel: 5000,
         };
     },
 
-    scrollState: function(scrollPosition) {
-        var realPosition = this.state.firstRenderedPixel + scrollPosition;
+    onScroll: function(event) {
+        scrollable = this.refs.scrollable.getDOMNode();
+        height = parseFloat(scrollable.style.height);
+        scrollTop = scrollable.scrollTop;
+        scrollHeight = scrollable.scrollHeight;
+
         var newFirstRenderedPixel = this.state.firstRenderedPixel;
         var newLastRenderedPixel = this.state.lastRenderedPixel;
 
-        if (realPosition < this.state.firstRenderedPixel + 500){
-            newFirstRenderedPixel = Math.max(0, this.state.firstRenderedPixel - 2000);
-            newLastRenderedPixel = this.state.firstRenderedPixel + 3000;
+        if (scrollTop + 2 * height > scrollHeight) {
+            this.setState({
+                firstRenderedPixel: this.state.lastRenderedPixel - 2000,
+                lastRenderedPixel: this.state.lastRenderedPixel + 5000,
+            });
+        } else if (this.state.firstRenderedPixel > 0 && scrollTop < 2 * height){
+            this.setState({
+                firstRenderedPixel: Math.max(0, this.state.firstRenderedPixel - 4000),
+                lastRenderedPixel: this.state.firstRenderedPixel + 5000,
+            });
         }
-        if (realPosition > this.state.lastRenderedPixel - 500){
-            newFirstRenderedPixel = Math.max(0, this.state.lastRenderedPixel - 1000);
-            newLastRenderedPixel = this.state.lastRenderedPixel + 3000;
-        }
-
-        this.setState({
-            scrollPosition: scrollPosition,
-            realPosition: realPosition,
-            firstRenderedPixel: newFirstRenderedPixel,
-            lastRenderedPixel: newLastRenderedPixel
-        });
     },
 
-    onScroll: function(event) {
-        this.scrollState(event.srcElement.body.scrollTop);
+    componentWillUpdate: function(){
+        scrollable = this.refs.scrollable.getDOMNode();
+        this.screenTop = this.state.firstRenderedPixel + scrollable.scrollTop;
     },
 
-    componentDidMount: function(){
-        window.addEventListener('scroll', this.onScroll);
-        // Scroll down to hide the "Loading..." header
-        // document.body.scrollTop = 50;
-    },
-
-    componentWillUnmount: function(){
-        window.removeEventListener('scroll', this.onScroll);
+    componentDidUpdate: function(){
+        scrollable = this.refs.scrollable.getDOMNode();
+        scrollable.scrollTop = this.screenTop - this.state.firstRenderedPixel;
     },
 
     render: function() {
         return (
-            <div style={{'overflowX': 'hidden', 'overflowY': 'auto', top: 26}} ref="scrollable">
+            <div style={{'overflowX': 'hidden', 'overflowY': 'scroll', 'height': this.props.height}} ref="scrollable" onScroll={this.onScroll}>
                 <TableBody
-                    items={this.state.items}
                     firstRenderedPixel={this.state.firstRenderedPixel}
                     lastRenderedPixel={this.state.lastRenderedPixel}
-                    scrollPosition={this.state.scrollPosition}
-                    realPosition={this.state.realPosition}
-                    height={this.state.height}
+                    items={this.props.items}
+                    height={this.props.height}
                 />
             </div>
         );
