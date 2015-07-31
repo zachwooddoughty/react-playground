@@ -10,7 +10,7 @@
     "npm": "2.10"
   },
   "dependencies": {
-    "react": "0.13.3",
+    "react": "0.13.3"
   },
   "devDependencies": {
     "gulp": "^3.8.8",
