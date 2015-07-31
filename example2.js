@@ -100,6 +100,7 @@ var TableBody = React.createClass({displayName: "TableBody",
                 React.createElement("tbody", null, rows)
             )
         );
+        
     }
 });
 
@@ -136,11 +137,14 @@ var InfiniteTable = React.createClass({displayName: "InfiniteTable",
     componentWillUpdate: function(){
         scrollable = this.refs.scrollable.getDOMNode();
         this.screenTop = this.state.firstRenderedPixel + scrollable.scrollTop;
+        console.log("Before update (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
     },
 
     componentDidUpdate: function(){
+        console.log("After update (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
         scrollable = this.refs.scrollable.getDOMNode();
         scrollable.scrollTop = this.screenTop - this.state.firstRenderedPixel;
+        console.log("After adjust (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
     },
 
     render: function() {
