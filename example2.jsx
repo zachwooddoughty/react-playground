@@ -40,7 +40,7 @@ var TableBody = React.createClass({
 
     render: function(){
         var rowHeight = 50;
-        var borderPx = 1;
+        var borderPx = 0;
         var tdStyle = {border: borderPx + 'px solid white', width: '50%', background: '#CCCCCC'};
         var trStyle = {height: rowHeight + 'px'};
 
@@ -96,7 +96,7 @@ var TableBody = React.createClass({
         }
         // console.log("With a LRP of %d, we rendered up to pixels (%d, %d)", this.props.lastRenderedPixel, leftDepth, rightDepth);
         return(
-            <table style={{width: '100%'}}>
+            <table cellspacing="0" style={{width: '100%', borderCollapse: 'collapse'}}>
                 <tbody>{rows}</tbody>
             </table>
         );
@@ -122,11 +122,13 @@ var InfiniteTable = React.createClass({
         var newLastRenderedPixel = this.state.lastRenderedPixel;
 
         if (scrollTop + 2 * height > scrollHeight) {
+            // console.log("Triggering update because scrollTop + 2 * height > scrollHeight");
             this.setState({
-                firstRenderedPixel: this.state.lastRenderedPixel - 2000,
+                firstRenderedPixel: Math.max(0, this.state.lastRenderedPixel - 4000),
                 lastRenderedPixel: this.state.lastRenderedPixel + 5000,
             });
         } else if (this.state.firstRenderedPixel > 0 && scrollTop < 2 * height){
+            // console.log("Triggering update because scrollTop < 2 * height");
             this.setState({
                 firstRenderedPixel: Math.max(0, this.state.firstRenderedPixel - 4000),
                 lastRenderedPixel: this.state.firstRenderedPixel + 5000,
@@ -137,14 +139,14 @@ var InfiniteTable = React.createClass({
     componentWillUpdate: function(){
         scrollable = this.refs.scrollable.getDOMNode();
         this.screenTop = this.state.firstRenderedPixel + scrollable.scrollTop;
-        console.log("Before update (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
+        // console.log("Before update (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
     },
 
     componentDidUpdate: function(){
-        console.log("After update (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
+        // console.log("After update (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
         scrollable = this.refs.scrollable.getDOMNode();
         scrollable.scrollTop = this.screenTop - this.state.firstRenderedPixel;
-        console.log("After adjust (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
+        // console.log("After adjust (screenTop, FRP, scrollTop) = (%d, %d, %d)", this.screenTop, this.state.firstRenderedPixel, scrollable.scrollTop);
     },
 
     render: function() {
