@@ -3,8 +3,8 @@ import json
 import requests
 from flask import Flask, Response, request, send_from_directory
 
-if not os.environ.get("dbo-userid"):
-    import secrets
+# if not os.environ.get("dbo-userid"):
+#     import secrets
 
 app = Flask(__name__, static_url_path='', static_folder='')
 app.debug = True
